@@ -1,4 +1,5 @@
 const fs = require('fs');
+const BigNumber = require('bignumber.js');
 
 
 class Migration {

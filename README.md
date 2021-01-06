@@ -150,13 +150,11 @@ Migration details will be saved in the `migration-log.json`.
 
 We recommend to use mocha for your tests. Save your tests in the `test` folder. Here's a test example:
 
-```
+```javascript
 const { expect } = require('chai');
 const freeton = require('ton-testing-suite');
 
-
 let Example;
-
 
 const tonWrapper = new freeton.TonWrapper({
   network: 'http://localhost',
