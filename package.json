@@ -1,0 +1,28 @@
+{
+  "name": "ton-testing-suite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/broxus/ton-testing-suite.git"
+  },
+  "author": "pavlovdog_ <pavlovdog.moscow@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/broxus/ton-testing-suite/issues"
+  },
+  "homepage": "https://github.com/broxus/ton-testing-suite#readme",
+  "dependencies": {
+    "bignumber.js": "^9.0.1",
+    "child_process": "^1.0.2",
+    "directory-tree": "^2.2.5",
+    "dotenv": "^8.2.0",
+    "mocha": "^8.2.1",
+    "ton-client-js": "^0.28.1",
+    "ton-client-node-js": "^0.28.0"
+  }
+}
