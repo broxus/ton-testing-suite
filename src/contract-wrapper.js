@@ -105,6 +105,7 @@ class ContractWrapper {
    * @param initParams Contract initial params (static values in Solidity)
    * @param initialBalance TONs to request from giver for deployment
    * @param _randomNonce Special initParam - if true, set to random value. Gives easy way to deploy
+   * @param keyPair Keys to use (first keys from the tonWrapper by default)
    * same contract on different addresses.
    * @returns {Promise<void>}
    */
@@ -112,13 +113,15 @@ class ContractWrapper {
     constructorParams={},
     initParams={},
     initialBalance=10000000000,
-    _randomNonce=false
+    _randomNonce=false,
+    keyPair = undefined
   ) {
     const deployParams = [
       this.imageBase64,
       constructorParams,
       _randomNonce === true ?
         {...initParams, _randomNonce: utils.getRandomNonce()} : initParams,
+      keyPair,
     ];
 
     // Derive future contract address from the deploy message

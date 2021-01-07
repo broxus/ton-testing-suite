@@ -42,16 +42,18 @@ class Migration {
                  initialBalance,
                  _randomNonce,
                  alias,
+                 keyPair,
                }) {
     console.log(`Deploying ${contract.name}...`);
-    
+
     const beforeDeployGiverBalance = await this.getGiverBalance();
-    
+
     const status = await contract.deploy(
       constructorParams,
       initParams,
       initialBalance,
-      _randomNonce
+      _randomNonce,
+      keyPair
     );
     
     const afterDeployGiverBalance = await this.getGiverBalance();
