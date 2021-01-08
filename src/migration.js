@@ -36,14 +36,14 @@ class Migration {
   }
   
   async deploy({
-                 contract,
-                 constructorParams,
-                 initParams,
-                 initialBalance,
-                 _randomNonce,
-                 alias,
-                 keyPair,
-               }) {
+   contract,
+   constructorParams,
+   initParams,
+   initialBalance,
+   _randomNonce,
+   alias,
+   keyPair,
+  }) {
     console.log(`Deploying ${contract.name}...`);
 
     const beforeDeployGiverBalance = await this.getGiverBalance();
@@ -62,7 +62,7 @@ class Migration {
     
     const historyAction = {
       alias: alias === undefined ? contract.name : alias,
-      contract,
+      contract: { ...contract },
       deployCost,
       status
     };
