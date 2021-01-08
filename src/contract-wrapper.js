@@ -107,6 +107,7 @@ class ContractWrapper {
    * @param _randomNonce Special initParam - if true, set to random value. Gives easy way to deploy
    * @param keyPair Keys to use (first keys from the tonWrapper by default)
    * same contract on different addresses.
+   * @param onlyDeriveAddress Return future address without actual deploy
    * @returns {Promise<void>}
    */
   async deploy(
@@ -114,7 +115,8 @@ class ContractWrapper {
     initParams={},
     initialBalance=10000000000,
     _randomNonce=false,
-    keyPair = undefined
+    keyPair = undefined,
+    onlyDeriveAddress = false
   ) {
     const deployParams = [
       this.imageBase64,
@@ -123,11 +125,16 @@ class ContractWrapper {
         {...initParams, _randomNonce: utils.getRandomNonce()} : initParams,
       keyPair,
     ];
-
+    
     // Derive future contract address from the deploy message
     const {
       address: futureAddress,
     } = await this.createDeployMessage(...deployParams);
+    
+    // - Don't deploy contract, just return it's future address
+    if (onlyDeriveAddress) {
+      return futureAddress;
+    }
     
     // Send grams from giver to pay for contract deployment
     const giverContract = new ContractWrapper(
