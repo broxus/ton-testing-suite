@@ -148,7 +148,13 @@ class ContractWrapper {
       dest: futureAddress,
       amount: initialBalance,
     }, null);
-    
+
+    // Wait for receiving grams
+    await this.tonWrapper.ton.queries.accounts.waitFor({
+      id: { eq: futureAddress },
+      balance: { gt: `0x0` }
+    }, 'balance');
+
     // Send the deploy message
     const deployMessage = await this.createDeployMessage(...deployParams);
     
