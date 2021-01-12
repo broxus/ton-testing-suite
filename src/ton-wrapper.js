@@ -38,7 +38,7 @@ class TonWrapper {
     this.ton.config.setData({
       servers: [this.config.network],
       waitForTimeout: this.config.waitForTimeout ? this.config.waitForTimeout : 5000,
-      messageExpirationTimeout: 120000,
+      messageExpirationTimeout: this.config.messageExpirationTimeout ? this.config.messageExpirationTimeout : 120000,
     });
     
     await this.ton.setup();
