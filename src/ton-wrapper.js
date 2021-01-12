@@ -13,9 +13,9 @@ class TonWrapper {
    * Setup TON client instance
    * @returns {Promise<void>}
    */
-  async setup() {
+  async setup(keysAmount=100) {
     await this._setupTonClient();
-    await this._setupKeyPairs();
+    await this._setupKeyPairs(keysAmount);
   }
   
   async afterRunHook() {
