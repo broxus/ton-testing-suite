@@ -13,7 +13,7 @@ const loadBase64FromFile = (filePath) => {
 };
 
 
-const getRandomNonce = () => Math.random() * 1000000000 | 0;
+const getRandomNonce = () => Math.random() * 64000 | 0;
 
 
 const convertCrystal = (crystalAmount, dimension) => {
