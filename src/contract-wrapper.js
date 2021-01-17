@@ -355,9 +355,11 @@ class ContractWrapper {
 }
 
 
-const requireContract = async (tonWrapper, name, address) => {
-  const contractBase64 = utils.loadBase64FromFile(`build/${name}.base64`);
-  const contractABI = utils.loadJSONFromFile(`build/${name}.abi.json`);
+const requireContract = async (tonWrapper, name, address, path = 'build') => {
+  const normalizedPath = path[path.length - 1] === '/' ? path.slice(0, path.length - 1) : path;
+
+  const contractBase64 = utils.loadBase64FromFile(`${normalizedPath}/${name}.base64`);
+  const contractABI = utils.loadJSONFromFile(`${normalizedPath}/${name}.abi.json`);
   
   const {
     codeBase64: contractCode
