@@ -36,6 +36,7 @@ class OutputDecoder {
       case 'bool':
         return this.decodeBool(encoded_value);
       case 'address':
+      case 'address[]':
         return encoded_value;
       case 'tuple':
         return this.decodeTuple(encoded_value, schema.components);
