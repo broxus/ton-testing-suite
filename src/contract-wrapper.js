@@ -55,7 +55,6 @@ class OutputDecoder {
   }
   
   decodeInt(value) {
-    // return BigInt(value);
     return new BigNumber(value);
   }
   
@@ -148,13 +147,17 @@ class ContractWrapper {
       dest: futureAddress,
       amount: initialBalance,
     }, null);
-
+    
     // Wait for receiving grams
-    await this.tonWrapper.ton.queries.accounts.waitFor({
-      id: { eq: futureAddress },
-      balance: { gt: `0x0` }
-    }, 'balance');
-
+    await this.tonWrapper.ton.net.wait_for_collection({
+      collection: 'accounts',
+      filter: {
+        id: { eq: futureAddress },
+        balance: { gt: `0x0` }
+      },
+      result: 'balance'
+    });
+    
     // Send the deploy message
     const deployMessage = await this.createDeployMessage(...deployParams);
     
@@ -192,19 +195,41 @@ class ContractWrapper {
    * @param imageBase64 Base64 encoded code
    * @param constructorParams Constructor params for contract constructor
    * @param initParams Initial state params for the contract
-   * @param keyPair Keys to use (first keys from the tonWrapper by default)
+   * @param _keyPair Keys to use (first keys from the tonWrapper by default)
    * @returns {Promise<*>}
    */
-  async createDeployMessage(imageBase64, constructorParams, initParams, keyPair) {
-    return this.tonWrapper.ton.contracts.createDeployMessage({
-      package: {
-        abi: this.abi,
-        imageBase64,
+  async createDeployMessage(imageBase64, constructorParams, initParams, _keyPair) {
+    const keyPair = _keyPair === undefined ? this.tonWrapper.keys[0] : _keyPair;
+
+    let encodeParams = {
+      abi: {
+        type: "Contract",
+        value: this.abi,
       },
-      constructorParams,
-      initParams,
-      keyPair: keyPair === undefined ? this.tonWrapper.keys[0] : keyPair,
-    });
+      deploy_set: {
+        tvc: imageBase64,
+        initial_data: initParams,
+      },
+      call_set: {
+        function_name: 'constructor',
+        input: constructorParams,
+      },
+      signer: {
+        type: 'None',
+      }
+    };
+    
+    if (keyPair) {
+      encodeParams = {
+        ...encodeParams,
+        signer: {
+          type: 'Keys',
+          keys: keyPair,
+        }
+      }
+    }
+    
+    return this.tonWrapper.ton.abi.encode_message(encodeParams);
   }
   
   /**
@@ -214,20 +239,30 @@ class ContractWrapper {
    * @returns {Promise<void>}
    */
   async waitForRunTransaction(message) {
-    const messageProcessingState = await this
+    const {
+      shard_block_id,
+    } = await this
       .tonWrapper
       .ton
-      .contracts
-      .sendMessage(message.message);
+      .processing
+      .send_message({
+        message: message.message,
+        send_events: false,
+      });
     
     return this
       .tonWrapper
       .ton
-      .contracts
-      .waitForRunTransaction(
-        message,
-        messageProcessingState
-      );
+      .processing
+      .wait_for_transaction({
+        message: message.message,
+        shard_block_id,
+        send_events: false,
+        abi: {
+          type: 'Contract',
+          value: this.abi
+        },
+      });
   }
   
   /**
@@ -238,79 +273,125 @@ class ContractWrapper {
    * @returns {Promise<void>}
    */
   async run(functionName, input={}, _keyPair) {
-    const keyPair = _keyPair === undefined ? this.tonWrapper.keys[0] : _keyPair;
-    
-    const runMessage = await this.tonWrapper.ton.contracts.createRunMessage({
-      address: this.address,
-      abi: this.abi,
-      functionName,
-      input,
-      keyPair,
-    });
-    
+    const runMessage = await this.getRunMessage(functionName, input, _keyPair);
+
     const status = await this.waitForRunTransaction(runMessage);
-    
+
     await this.tonWrapper.afterRunHook();
-    
+
     return status;
   }
   
+  async getRunMessage(functionName, input={}, _keyPair) {
+    const keyPair = _keyPair === undefined ? this.tonWrapper.keys[0] : _keyPair;
+  
+    let encodeParams = {
+      address: this.address,
+      abi: {
+        type: "Contract",
+        value: this.abi,
+      },
+      call_set: {
+        function_name: functionName,
+        input,
+      },
+      signer: {
+        type: 'None',
+      }
+    };
+  
+    if (keyPair) {
+      encodeParams = {
+        ...encodeParams,
+        signer: {
+          type: 'Keys',
+          keys: keyPair,
+        }
+      }
+    }
+
+    return this.tonWrapper.ton.abi.encode_message(encodeParams);
+  }
+  
   /**
-   * Read data from the contract (in terms of TON - run).
+   * Run message locally (in terms of TON - run).
    * @param functionName
    * @param input
-   * @returns {Promise<unknown[]>}
+   * @returns {Promise<ResultOfRunExecutor>}
    */
   async runLocal(functionName, input={}) {
-    const { output } = await this.tonWrapper.ton.contracts.runLocal({
-      address: this.address,
-      abi: this.abi,
+    const runMessage = await this.getRunMessage(
       functionName,
-      fullRun: false,
       input,
-      // keyPair: this.config.keys,
+      this.tonWrapper.keys[0]
+    );
+    
+    const {
+      result: [{
+        boc
+      }]
+    } = await this.tonWrapper.ton.net.query_collection({
+      collection: 'accounts',
+      filter: {
+        id: {
+          eq: this.address,
+        }
+      },
+      result: 'boc'
     });
     
-    // Decode output
+    const {
+      decoded: {
+        output,
+      }
+    } = await this.tonWrapper.ton.tvm.run_executor({
+      abi: {
+        type: 'Contract',
+        value: this.abi
+      },
+      message: runMessage.message,
+      account: {
+        type: 'Account',
+        boc
+      },
+    });
+  
     const functionAttributes = this.abi.functions.find(({ name }) => name === functionName);
-    
-    const outputDecoder = new OutputDecoder(output, functionAttributes);
-    
+  
+    const outputDecoder = new OutputDecoder(
+      output,
+      functionAttributes
+    );
+  
     return outputDecoder.decode();
   }
   
   /**
    * Decode list of messages according to the ABI
    * @param messages
-   * @param internal
+   * @param is_internal
    * @param messageDirection
    * @returns {Promise<unknown[]>}
    */
-  async decodeMessages(messages, internal, messageDirection) {
-    const decodedMessages = await Promise.all(messages.map(async (message) => {
-      try {
-        const decodeFunction = messageDirection === 'output' ? 'decodeOutputMessageBody' : 'decodeInputMessageBody';
-        
-        const decodedMessage = await this
-          .tonWrapper
-          .ton
-          .contracts[decodeFunction]({
-          abi: this.abi,
-          bodyBase64: message.body,
-          internal,
-        });
-        
-        return {
-          ...decodedMessage,
-          messageId: message.id,
-          src: message.src,
-        };
-      } catch (e) {
-        return null;
-      }
-    }));
+  async decodeMessages(messages, is_internal, messageDirection) {
+    const decodedMessages = messages.map(async (message) => {
+      const decodedMessage = await this.tonWrapper.ton.abi.decode_message_body({
+        abi: {
+          type: 'Contract',
+          value: this.abi
+        },
+        body: message.body,
+        is_internal,
+      });
+  
+      return {
+        ...decodedMessage,
+        messageId: message.id,
+        src: message.src,
+      };
+    });
     
-    return decodedMessages.filter(message => message !== null);
+    return Promise.all(decodedMessages);
   }
   
   async getReceivedMessages(messageType, internal) {
@@ -331,14 +412,19 @@ class ContractWrapper {
    * @returns {Promise<unknown[]>} List of messages
    */
   async getSentMessages(messageType, internal) {
-    const messages = (await this.tonWrapper.ton.queries.messages.query({
-        src: { eq: this.address },
-        msg_type: { eq: messageType }
-      },
-      'body id src',
+    const {
+      result
+    } = (await this.tonWrapper.ton.net.query_collection({
+        collection: 'messages',
+        filter: {
+          src: {eq: this.address},
+          msg_type: {eq: messageType}
+        },
+        result: 'body id src',
+      }
     ));
     
-    return this.decodeMessages(messages, internal, 'output');
+    return this.decodeMessages(result, internal, 'output');
   }
   
   /**
@@ -350,7 +436,7 @@ class ContractWrapper {
   async getEvents(eventName) {
     const sentMessages = await this.getSentMessages(QMessageType.extOut, false);
     
-    return sentMessages.filter((message) => message.function === eventName);
+    return sentMessages.filter((message) => message.name === eventName);
   }
 }
 
@@ -360,15 +446,19 @@ const requireContract = async (tonWrapper, name, address) => {
   const contractABI = utils.loadJSONFromFile(`build/${name}.abi.json`);
   
   const {
-    codeBase64: contractCode
+    code: contractCode
   } = await tonWrapper
     .ton
-    .contracts
-    .getCodeFromImage({
-      imageBase64: contractBase64,
+    .boc
+    .get_code_from_tvc({
+      tvc: contractBase64,
     });
   
-  const contractInstance = new ContractWrapper(tonWrapper, contractABI, contractBase64);
+  const contractInstance = new ContractWrapper(
+    tonWrapper,
+    contractABI,
+    contractBase64
+  );
   
   contractInstance.code = contractCode;
   contractInstance.name = name;

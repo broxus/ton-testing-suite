@@ -1,4 +1,5 @@
 const dirTree = require("directory-tree");
+const fs = require('fs');
 const { execSync } = require('child_process');
 
 
@@ -27,6 +28,13 @@ const contractsNestedTree = dirTree(
 const contractsTree = flatDirTree(contractsNestedTree);
 
 console.log(`Compiling ${contractsTree.length} sources`);
+
+
+// - Create build if not exists
+if (!fs.existsSync('build')){
+  fs.mkdirSync('build');
+}
+
 
 try {
 // - Prepare each source

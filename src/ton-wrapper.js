@@ -1,6 +1,10 @@
-const { TONClient } = require('ton-client-node-js');
-const utils = require('./utils');
 const BigNumber = require('bignumber.js');
+
+const { TonClient } = require("@tonclient/core");
+const { libNode } = require("@tonclient/lib-node");
+TonClient.useBinaryLibrary(libNode);
+
+const utils = require('./utils');
 
 
 class TonWrapper {
@@ -33,22 +37,22 @@ class TonWrapper {
   }
   
   async _setupTonClient() {
-    this.ton = new TONClient();
-    
-    this.ton.config.setData({
-      servers: [this.config.network],
-      waitForTimeout: this.config.waitForTimeout ? this.config.waitForTimeout : 5000,
-      messageExpirationTimeout: this.config.messageExpirationTimeout ? this.config.messageExpirationTimeout : 120000,
+    this.ton = new TonClient({
+      network: {
+        server_address: this.config.network,
+        wait_for_timeout: this.config.waitForTimeout ? this.config.waitForTimeout : 5000,
+      },
+      abi: {
+        message_expiration_timeout: this.config.messageExpirationTimeout ? this.config.messageExpirationTimeout : 120000,
+      }
     });
-    
-    await this.ton.setup();
   }
   
   async _setupKeyPairs(keysAmount=100) {
-    const keysHDPaths = await Promise.all([...Array(keysAmount).keys()].map(keyIndex => `m/44'/396'/0'/0/${keyIndex}`));
+    const keysHDPaths = [...Array(keysAmount).keys()].map(i => `m/44'/396'/0'/0/${i}`);
     
     this.keys = await Promise.all(keysHDPaths.map(async (path) => {
-      return this.ton.crypto.mnemonicDeriveSignKeys({
+      return this.ton.crypto.mnemonic_derive_sign_keys({
         dictionary: 1,
         wordCount: 12,
         phrase: this.config.seed,
@@ -58,13 +62,18 @@ class TonWrapper {
   }
   
   async getBalance(address) {
-    const [{ balance }] = await this.ton.queries.accounts.query(
-      {
+    const {
+      result: [{
+        balance
+      }]
+    } = await this.ton.net.query_collection({
+      collection: 'accounts',
+      filter: {
         id: { eq: address },
       },
-      'balance',
-    );
-  
+      result: 'balance'
+    });
+
     return new BigNumber(balance);
   }
 }

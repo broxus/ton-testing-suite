@@ -17,11 +17,15 @@
   },
   "homepage": "https://github.com/broxus/ton-testing-suite#readme",
   "dependencies": {
+    "@tonclient/core": "^1.5.2",
+    "@tonclient/lib-node": "^1.5.2",
     "bignumber.js": "^9.0.1",
+    "chai": "^4.2.0",
     "child_process": "^1.0.2",
     "directory-tree": "^2.2.5",
     "dotenv": "^8.2.0",
     "mocha": "^8.2.1",
+    "mocha-logger": "^1.0.7",
     "ton-client-js": "^0.28.1",
     "ton-client-node-js": "^0.28.0"
   }
