@@ -72,6 +72,8 @@ describe('Test TON testing suite', async function() {
   
     it('Run function method', async function() {
      const response = await SimpleContract.runLocal('getDetails', {});
+
+     logger.log(`Run result: ${response}`);
      
      expect(response.toNumber()).to.be.equal(111, 'Wrong state');
     });

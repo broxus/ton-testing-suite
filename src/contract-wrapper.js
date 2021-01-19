@@ -344,16 +344,13 @@ class ContractWrapper {
       decoded: {
         output,
       }
-    } = await this.tonWrapper.ton.tvm.run_executor({
+    } = await this.tonWrapper.ton.tvm.run_tvm({
       abi: {
         type: 'Contract',
         value: this.abi
       },
       message: runMessage.message,
-      account: {
-        type: 'Account',
-        boc
-      },
+      account: boc,
     });
   
     const functionAttributes = this.abi.functions.find(({ name }) => name === functionName);

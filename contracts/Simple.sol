@@ -23,7 +23,12 @@ contract Simple {
         emit StateChange(_state);
     }
 
-    function getDetails() public view returns (uint _state) {
+    function getDetails()
+        public
+        view
+    returns (
+        uint _state
+    ) {
         tvm.accept();
 
         return state;
