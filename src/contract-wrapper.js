@@ -1,7 +1,10 @@
 const { QMessageType } = require('ton-client-js');
 const fs = require('fs');
 const BigNumber = require('bignumber.js');
+const _ = require('underscore');
+
 const utils = require('./utils');
+const NETWORK_ATTEMPTS = 10;
 
 
 class OutputDecoder {
@@ -159,17 +162,27 @@ class ContractWrapper {
       result: 'balance'
     });
     
-    // Send the deploy message
-    const deployMessage = await this.createDeployMessage(...deployParams);
+
+    let error;
+    for (const attempt in _.range(NETWORK_ATTEMPTS)) {
+      try {
+        // Send the deploy message
+        const deployMessage = await this.createDeployMessage(...deployParams);
+  
+        // - Wait deployment confirmed
+        const status = await this.waitForRunTransaction(deployMessage);
+  
+        await this.tonWrapper.afterRunHook();
+  
+        this.address = futureAddress;
+  
+        return status;
+      } catch (e) {
+        error = e;
+      }
+    }
     
-    // - Wait deployment confirmed
-    const status = await this.waitForRunTransaction(deployMessage);
-    
-    await this.tonWrapper.afterRunHook();
-    
-    this.address = futureAddress;
-    
-    return status;
+    throw error;
   }
   
   /**
@@ -274,13 +287,23 @@ class ContractWrapper {
    * @returns {Promise<void>}
    */
   async run(functionName, input={}, _keyPair) {
-    const runMessage = await this.getRunMessage(functionName, input, _keyPair);
+    let error;
+    
+    for (const attempt in _.range(NETWORK_ATTEMPTS)) {
+      try {
+        const runMessage = await this.getRunMessage(functionName, input, _keyPair);
+  
+        const status = await this.waitForRunTransaction(runMessage);
+  
+        await this.tonWrapper.afterRunHook();
+  
+        return status;
+      } catch (e) {
+        error = e;
+      }
+    }
 
-    const status = await this.waitForRunTransaction(runMessage);
-
-    await this.tonWrapper.afterRunHook();
-
-    return status;
+    throw error;
   }
   
   async getRunMessage(functionName, input={}, _keyPair) {

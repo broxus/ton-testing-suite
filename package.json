@@ -27,6 +27,7 @@
     "mocha": "^8.2.1",
     "mocha-logger": "^1.0.7",
     "ton-client-js": "^0.28.1",
-    "ton-client-node-js": "^0.28.0"
+    "ton-client-node-js": "^0.28.0",
+    "underscore": "^1.12.0"
   }
 }
