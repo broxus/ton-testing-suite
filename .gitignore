@@ -7,4 +7,3 @@ node_modules/
 #Bridge.code
 free-ton/migration-log.json
 free-ton/keys
-build/

@@ -347,7 +347,7 @@ class ContractWrapper {
     const runMessage = await this.getRunMessage(
       functionName,
       input,
-      this.tonWrapper.keys[0]
+      null
     );
     
     const {
