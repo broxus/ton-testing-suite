@@ -94,4 +94,21 @@ describe('Test TON testing suite', async function() {
       expect(events).to.have.lengthOf(2, 'Wrong events amount emitted');
     });
   });
+  
+  describe('Random mnemonic', async function () {
+    it('Test random mnemonic derivation', async function() {
+      const ton1 = new freeton.TonWrapper({
+        network: 'http://localhost',
+      });
+
+      const ton2 = new freeton.TonWrapper({
+        network: 'http://localhost',
+      });
+      
+      await ton1.setup();
+      await ton2.setup();
+      
+      expect(ton1.config.seed).to.not.equal(ton2.config.seed, 'Same random mnemonics');
+    });
+  });
 });

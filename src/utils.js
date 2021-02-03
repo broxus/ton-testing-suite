@@ -15,6 +15,11 @@ const loadBase64FromFile = (filePath) => {
 
 const getRandomNonce = () => Math.random() * 64000 | 0;
 
+function genHexString(len) {
+  const str = Math.floor(Math.random() * Math.pow(16, len)).toString(16);
+  return "0".repeat(len - str.length) + str;
+}
+
 
 const convertCrystal = (crystalAmount, dimension) => {
   const crystalBN = new BigNumber(crystalAmount);
@@ -62,4 +67,5 @@ module.exports = {
   stringToBytesArray,
   sleep,
   catchRunFail,
+  genHexString,
 };

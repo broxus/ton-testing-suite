@@ -49,6 +49,19 @@ class TonWrapper {
   }
   
   async _setupKeyPairs(keysAmount=100) {
+    if (!this.config.seed) {
+      const entropy = `0x${utils.genHexString(32)}`;
+      
+      const {
+        phrase,
+      } = await this.ton.crypto.mnemonic_from_entropy({
+        entropy,
+        word_count: 12,
+      });
+  
+      this.config.seed = phrase;
+    }
+
     const keysHDPaths = [...Array(keysAmount).keys()].map(i => `m/44'/396'/0'/0/${i}`);
     
     this.keys = await Promise.all(keysHDPaths.map(async (path) => {
