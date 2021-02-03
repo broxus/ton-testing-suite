@@ -28,6 +28,13 @@ class OutputDecoder {
       case 'uint32':
       case 'uint16':
       case 'uint8':
+      case 'int256':
+      case 'int160':
+      case 'int128':
+      case 'int64':
+      case 'int32':
+      case 'int16':
+      case 'int8':
         return this.decodeInt(encoded_value);
       case 'uint256[]':
       case 'uint128[]':
@@ -35,6 +42,12 @@ class OutputDecoder {
       case 'uint32[]':
       case 'uint16[]':
       case 'uint8[]':
+      case 'int256[]':
+      case 'int128[]':
+      case 'int64[]':
+      case 'int32[]':
+      case 'int16[]':
+      case 'int8[]':
         return this.decodeIntArray(encoded_value);
       case 'bool':
         return this.decodeBool(encoded_value);
