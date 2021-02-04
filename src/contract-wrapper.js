@@ -4,7 +4,6 @@ const BigNumber = require('bignumber.js');
 const _ = require('underscore');
 
 const utils = require('./utils');
-const NETWORK_ATTEMPTS = 10;
 
 
 class OutputDecoder {
@@ -114,6 +113,29 @@ class ContractWrapper {
     this.address = address;
   }
   
+  debugLog(text) {
+    if (this.tonWrapper.debug !== true) return;
+    
+    console.log(`[Contract wrapper debug] ${(new Date()).toLocaleTimeString()} ${text}`);
+  }
+  
+  async getFutureAddress({
+    constructorParams,
+    initParams,
+    keyPair
+  }) {
+    const {
+      address: futureAddress,
+    } = await this.createDeployMessage(
+      this.imageBase64,
+      constructorParams,
+      initParams,
+      keyPair
+    );
+  
+    return futureAddress;
+  }
+  
   /**
    * Deploy smart contract to the network
    * @dev Uses Giver contract to pay for deploy (https://docs.ton.dev/86757ecb2/p/00f9a3-ton-os-se-giver)
@@ -126,14 +148,13 @@ class ContractWrapper {
    * @param onlyDeriveAddress Return future address without actual deploy
    * @returns {Promise<void>}
    */
-  async deploy(
-    constructorParams={},
-    initParams={},
-    initialBalance=10000000000,
-    _randomNonce=false,
-    keyPair = undefined,
-    onlyDeriveAddress = false
-  ) {
+  async deploy({
+    constructorParams,
+    initParams,
+    initialBalance,
+    _randomNonce,
+    keyPair,
+  }) {
     const deployParams = [
       this.imageBase64,
       constructorParams,
@@ -147,10 +168,6 @@ class ContractWrapper {
       address: futureAddress,
     } = await this.createDeployMessage(...deployParams);
     
-    // - Don't deploy contract, just return it's future address
-    if (onlyDeriveAddress) {
-      return futureAddress;
-    }
     
     // Send grams from giver to pay for contract deployment
     const giverContract = new ContractWrapper(
@@ -177,7 +194,9 @@ class ContractWrapper {
     
 
     let error;
-    for (const attempt in _.range(NETWORK_ATTEMPTS)) {
+    for (const attempt in _.range(this.tonWrapper.deployAttempts)) {
+      this.debugLog(`Deploy attempt #${attempt}`);
+      
       try {
         // Send the deploy message
         const deployMessage = await this.createDeployMessage(...deployParams);
@@ -302,7 +321,9 @@ class ContractWrapper {
   async run(functionName, input={}, _keyPair) {
     let error;
     
-    for (const attempt in _.range(NETWORK_ATTEMPTS)) {
+    for (const attempt in _.range(this.tonWrapper.runAttempts)) {
+      this.debugLog(`Run attempt #${attempt}`);
+
       try {
         const runMessage = await this.getRunMessage(functionName, input, _keyPair);
   

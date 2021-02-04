@@ -10,6 +10,7 @@ const ton = new freeton.TonWrapper({
   },
   network: 'http://localhost',
   seed: "melody clarify hand pause kit economy bind behind grid witness cheap tomorrow",
+  debug: true,
 });
 
 
@@ -35,29 +36,27 @@ describe('Test TON testing suite', async function() {
     });
     
     it('Get future address', async function() {
-      const address = await SimpleContract.deploy(
-        {
+      const address = await SimpleContract.getFutureAddress({
+        constructorParams: {
           _state: 123
         },
-        {},
-        freeton.utils.convertCrystal('10', 'nano'),
-        true,
-        undefined,
-        true,
-      );
+        initParams: {
+          _randomNonce: 123,
+        },
+      });
 
       expect(address).to.be.a('string').and.satisfy(s => s.startsWith('0:'), 'Bad future address');
     });
 
     it('Deploy contract', async function() {
-      await SimpleContract.deploy(
-        {
+      await SimpleContract.deploy({
+        constructorParams: {
           _state: 123
         },
-        {},
-        freeton.utils.convertCrystal('10', 'nano'),
-        true,
-      );
+        initParams: {},
+        _randomNonce: true,
+        initialBalance: freeton.utils.convertCrystal('10', 'nano')
+      });
   
       expect(SimpleContract.address).to.be.a('string').and.satisfy(s => s.startsWith('0:'), 'Bad deployed address');
 

@@ -8,9 +8,18 @@ const utils = require('./utils');
 
 
 class TonWrapper {
-  constructor({ giverConfig, ...config}) {
-    this.config = config;
+  constructor({
+    giverConfig,
+    debug,
+    runAttempts,
+    deployAttempts,
+    ...config
+  }) {
     this.giverConfig = giverConfig;
+    this.debug = debug !== undefined;
+    this.runAttempts = runAttempts === undefined ? 10 : runAttempts;
+    this.deployAttempts = deployAttempts === undefined ? 10 : deployAttempts;
+    this.config = config;
   }
   
   /**
