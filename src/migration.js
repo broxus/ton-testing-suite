@@ -48,13 +48,13 @@ class Migration {
 
     const beforeDeployGiverBalance = await this.getGiverBalance();
 
-    const status = await contract.deploy(
+    const status = await contract.deploy({
       constructorParams,
       initParams,
       initialBalance,
       _randomNonce,
       keyPair
-    );
+    });
     
     const afterDeployGiverBalance = await this.getGiverBalance();
     
