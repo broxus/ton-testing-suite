@@ -1,5 +1,8 @@
 # TON testing suite
 
+⚡ This package has been deprecated in favor of [locklift](https://github.com/broxus/ton-locklift) package.
+Use it at your own risk! ⚡
+
 Set of tools for making testing smart contracts on TON easier.
 
 ## Installation
