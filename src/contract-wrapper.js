@@ -378,6 +378,10 @@ class ContractWrapper {
    * @returns {Promise<ResultOfRunExecutor>}
    */
   async runLocal(functionName, input={}) {
+    if (this.abi.functions.find(e => e.name === functionName).inputs.find(e => e.name === '_answer_id')) {
+      input._answer_id = input._answer_id || 1;
+    }
+
     const runMessage = await this.getRunMessage(
       functionName,
       input,
