@@ -381,6 +381,9 @@ class ContractWrapper {
     if (this.abi.functions.find(e => e.name === functionName).inputs.find(e => e.name === '_answer_id')) {
       input._answer_id = input._answer_id || 1;
     }
+    if (this.abi.functions.find(e => e.name === functionName).inputs.find(e => e.name === 'answerId')) {
+      input.answerId = input.answerId || 1;
+    }
 
     const runMessage = await this.getRunMessage(
       functionName,
